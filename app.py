@@ -7,6 +7,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from google.auth.transport import requests
 
 app = Flask(__name__)
 
@@ -43,6 +44,14 @@ def init_db():
                  quantidade INTEGER,
                  cliente_id INTEGER,
                  data TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS fornecedores (
+                 fornecedor_id INTEGER PRIMARY KEY,
+                 fornecedor_regiao TEXT,
+                 fornecedor_cidade TEXT,
+                 fornecedor_num_loja TEXT,
+                 fornecedor_potencia_loja TEXT,
+                 fornecedor_num_cim TEXT,
+                 fornecedor_endereco TEXT)''')
     conn.commit()
     conn.close()
 
@@ -78,7 +87,7 @@ def get_drive_service():
 # Rotas
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('/index.html')
 
 @app.route('/estoque', methods=['GET', 'POST'])
 def estoque():
@@ -163,6 +172,32 @@ def clientes():
     conn.close()
     return render_template('clientes.html', clientes=clientes_list)
 
+@app.route('/fornecedores', methods=['GET', 'POST'])
+def fornecedores():
+    if request.method == 'POST':
+        regiao = request.form['fornecedor_regiao']
+        cidade = request.form['fornecedor_cidade']
+        num_loja = request.form['fornecedor_num_loja']
+        potencia_loja = request.form['fornecedor_potencia_loja']
+        num_cim = request.form['fornecedor_num_cim']
+        endereco = request.form['fornecedor_endereco']
+        if not all([regiao, cidade, num_loja, potencia_loja, num_cim, endereco]):
+            return "Campos obrigatórios faltando!", 400
+        conn = sqlite3.connect('gestao.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO fornecedores (fornecedor_regiao, fornecedor_cidade, fornecedor_num_loja, fornecedor_potencia_loja, fornecedor_num_cim, fornecedor_endereco) VALUES (?, ?, ?, ?, ?, ?)",
+                  (regiao, cidade, num_loja, potencia_loja, num_cim, endereco))
+        conn.commit()
+        conn.close()
+        log_auditoria(f"Cadastrado fornecedor: {num_loja}")
+        return redirect(url_for('fornecedores'))
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM fornecedores")
+    fornecedores_list = c.fetchall()
+    conn.close()
+    return render_template('fornecedores.html', fornecedores=fornecedores_list)
+
 @app.route('/auditoria')
 def auditoria():
     conn = sqlite3.connect('gestao.db')
@@ -244,6 +279,43 @@ def backup_nuvem():
         return "Backup realizado com sucesso no Google Drive!"
     except Exception as e:
         return f"Erro no backup: {str(e)} (Verifique conexão e credentials.json)"
+
+# Editar e Excluir Clientes
+
+@app.route('/cliente/update/<int:id>', methods=['POST'])
+def update_cliente(id):
+    # Esta rota SÓ lida com o envio do formulário de EDIÇÃO
+    if request.method == 'POST':
+        conn = sqlite3.connect('gestao.db')
+        c = conn.cursor()
+        
+        regiao = request.form['regiao']
+        cidade = request.form['cidade']
+        num_loja = request.form['num_loja']
+        # ... pegue os outros campos do formulário ...
+        
+        c.execute('''UPDATE clientes SET regiao=?, cidade=?, num_loja=? 
+                     WHERE id=?''', (regiao, cidade, num_loja, id))
+        conn.commit()
+        conn.close()
+        
+        log_auditoria(f"Cliente atualizado: Loja {num_loja} (ID: {id})")
+        
+        return redirect(url_for('clientes'))
+
+@app.route('/cliente/delete/<int:id>')
+def delete_cliente(id):
+    # Esta rota SÓ lida com a exclusão
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM clientes WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    
+    log_auditoria(f"Cliente excluído: ID {id}")
+    
+    return redirect(url_for('clientes'))
+
 
 if __name__ == '__main__':
     import webbrowser

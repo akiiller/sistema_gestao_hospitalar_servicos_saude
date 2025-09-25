@@ -29,9 +29,29 @@
         </form>
         <h2>Clientes Cadastrados</h2>
         <table>
-            <tr><th>ID</th><th>Região</th><th>Cidade</th><th>Nº Loja</th><th>Potência</th><th>Nº CIM</th><th>Endereço</th></tr>
+            <tr>
+                <th>ID</th>
+                <th>Região</th>
+                <th>Cidade</th>
+                <th>Nº Loja</th>
+                <th>Potência</th>
+                <th>Nº CIM</th>
+                <th>Endereço</th>
+                <th>Editar</th>
+                <th>Excluir</th>
+            </tr>
             {% for cliente in clientes %}
-            <tr><td>{{ cliente[0] }}</td><td>{{ cliente[1] }}</td><td>{{ cliente[2] }}</td><td>{{ cliente[3] }}</td><td>{{ cliente[4] }}</td><td>{{ cliente[5] }}</td><td>{{ cliente[6] }}</td></tr>
+            <tr>
+                <td>{{ cliente[0] }}</td>
+                <td>{{ cliente[1] }}</td>
+                <td>{{ cliente[2] }}</td>
+                <td>{{ cliente[3] }}</td>
+                <td>{{ cliente[4] }}</td>
+                <td>{{ cliente[5] }}</td>
+                <td>{{ cliente[6] }}</td>
+                <td><a href="{{ url_for('editar_cliente', id=cliente[0]) }}">Editar</a></td>
+                <td><a href="{{ url_for('excluir_cliente', id=cliente[0]) }}">Excluir</a></td>
+            </tr>
             {% endfor %}
         </table>
     </main>

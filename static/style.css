@@ -19,3 +19,18 @@ th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
 th { background: #007bff; color: white; }
 :root { --contrast-ratio: 4.5; }
 a:focus, button:focus { outline: 2px solid #0056b3; }
+.btn-edit {
+    padding: 5px 10px;
+    background-color: #007bff; /* Azul */
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.btn-delete {
+    padding: 5px 10px;
+    background-color: #dc3545; /* Vermelho */
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+}
