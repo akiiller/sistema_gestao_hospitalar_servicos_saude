@@ -2,31 +2,41 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastro de Clientes</title>
+    <title>Gerenciar de Clientes</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header>
-        <h1>Cadastro de Clientes</h1>
-        <a href="/" class="back-btn">Voltar</a>
+        <h1>Gerenciar Clientes</h1>
+        <a href="/" class="back-btn">Voltar ao menu</a>
     </header>
     <main>
-        <h2>Cadastrar Cliente</h2>
-        <form method="POST" aria-label="Formulário de cadastro de cliente">
-            <label for="regiao">Região:</label>
-            <input type="text" id="regiao" name="regiao" required aria-required="true"><br>
-            <label for="cidade">Cidade:</label>
-            <input type="text" id="cidade" name="cidade" required aria-required="true"><br>
-            <label for="num_loja">Número da Loja:</label>
-            <input type="text" id="num_loja" name="num_loja" required aria-required="true"><br>
-            <label for="potencia_loja">Potência da Loja:</label>
-            <input type="text" id="potencia_loja" name="potencia_loja" required aria-required="true"><br>
-            <label for="num_cim">Número do CIM:</label>
-            <input type="text" id="num_cim" name="num_cim" required aria-required="true"><br>
-            <label for="endereco">Endereço:</label>
-            <input type="text" id="endereco" name="endereco" required aria-required="true"><br>
-            <button type="submit">Cadastrar</button>
-        </form>
+        {% if cliente_para_editar %}
+            <h2>Editando Cliente (Loja: {{ cliente_para_editar[3] }})</h2>
+            <form action="{{ url_for('update_cliente', id=cliente_para_editar[0]) }}" method="POST">
+                <label for="regiao">Região:</label>
+                <input type="text" id="regiao" name="regiao" required aria-required="true"><br>
+                <label for="cidade">Cidade:</label>
+                <input type="text" id="cidade" name="cidade" required aria-required="true"><br>
+                <label for="num_loja">Número da Loja:</label>
+                <input type="text" id="num_loja" name="num_loja" required aria-required="true"><br>
+                <label for="potencia_loja">Potência da Loja:</label>
+                <input type="text" id="potencia_loja" name="potencia_loja" required aria-required="true"><br>
+                <label for="num_cim">Número do CIM:</label>
+                <input type="text" id="num_cim" name="num_cim" required aria-required="true"><br>
+                <label for="endereco">Endereço:</label>
+                <input type="text" id="endereco" name="endereco" required aria-required="true"><br>
+                <button type="submit">Cadastrar</button>
+            </form>
+        {% else %}
+            <h2>Adicionar Novo Cliente</h2>
+            <form action="{{ url_for('clientes') }}" method="POST">
+                <input type="hidden" name="add_cliente" value="1"> <label>Região: <input type="text" name="regiao" placeholder="Região" required></label>
+                <label>Cidade: <input type="text" name="cidade" placeholder="Cidade" required></label>
+                <label>Nº Loja: <input type="text" name="num_loja" placeholder="Número da Loja" required></label>
+                <button type="submit">Adicionar Cliente</button>
+            </form>
+        {% endif %}
         <h2>Clientes Cadastrados</h2>
         <table>
             <tr>
@@ -49,8 +59,8 @@
                 <td>{{ cliente[4] }}</td>
                 <td>{{ cliente[5] }}</td>
                 <td>{{ cliente[6] }}</td>
-                <td><a href="{{ url_for('editar_cliente', id=cliente[0]) }}">Editar</a></td>
-                <td><a href="{{ url_for('excluir_cliente', id=cliente[0]) }}">Excluir</a></td>
+                <td><a href="{{ url_for('clientes', action='edit', id=cliente[0]) }}" class="btn-edit">Editar</a></td>
+                <td><<a href="{{ url_for('delete_cliente', id=cliente[0]) }}" class="btn-delete" onclick="return confirm('Tem certeza?');">Excluir</a></td>
             </tr>
             {% endfor %}
         </table>
