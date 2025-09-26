@@ -30,9 +30,29 @@
         </form>
         <h2>Fornecedores Cadastrados</h2>
         <table>
-            <tr><th>ID</th><th>Região</th><th>Cidade</th><th>Nº Loja</th><th>Potência</th><th>Nº CIM</th><th>Endereço</th></tr>
+            <tr>
+                <th>ID</th>
+                <th>Região</th>
+                <th>Cidade</th>
+                <th>Nº Loja</th>
+                <th>Potência</th>
+                <th>Nº CIM</th>
+                <th>Endereço</th>
+                <th>Editar</th>
+                <th>Excluir</th>
+            </tr>
             {% for fornecedor in fornecedores %}
-            <tr><td>{{ fornecedor[0] }}</td><td>{{ fornecedor[1] }}</td><td>{{ fornecedor[2] }}</td><td>{{ fornecedor[3] }}</td><td>{{ fornecedor[4] }}</td><td>{{ fornecedor[5] }}</td><td>{{ fornecedor[6] }}</td></tr>
+            <tr>
+                <td>{{ fornecedor[0] }}</td>
+                <td>{{ fornecedor[1] }}</td>
+                <td>{{ fornecedor[2] }}</td>
+                <td>{{ fornecedor[3] }}</td>
+                <td>{{ fornecedor[4] }}</td>
+                <td>{{ fornecedor[5] }}</td>
+                <td>{{ fornecedor[6] }}</td>
+                <td><a href="{{ url_for('editar_fornecedores', id=fornecedor[0]) }}" class="btn-edit">Editar</a></td>
+                <td><a href="{{ url_for('deletar_fornecedores', id=fornecedor[0]) }}" class="btn-delete" onclick="return confirm('Tem certeza?');">Excluir</a></td>
+            </tr>
             {% endfor %}
         </table>
     </main>

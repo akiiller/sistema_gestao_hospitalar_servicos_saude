@@ -24,10 +24,31 @@
             <button type="submit">Adicionar</button>
         </form>
         <h2>Itens em Estoque</h2>
+        <div style="margin-bottom: 15px;">
+            <a href="{{ url_for('relatorio_estoque_pdf') }}" target="_blank" class="btn-export">
+                Exportar para PDF
+            </a>
+        </div>
         <table>
-            <tr><th>ID</th><th>Produto</th><th>Código de Barras</th><th>Quantidade</th><th>Validade</th></tr>
+            <tr>
+                <th>ID</th>
+                <th>Produto</th>
+                <th>Código de Barras</th>
+                <th>Quantidade</th>
+                <th>Validade</th>
+                <th>Editar</th>
+                <th>Excluir</th>
+            </tr>
             {% for item in itens %}
-            <tr><td>{{ item[0] }}</td><td>{{ item[1] }}</td><td>{{ item[2] }}</td><td>{{ item[3] }}</td><td>{{ item[4] }}</td></tr>
+            <tr>
+                <td>{{ item[0] }}</td>
+                <td>{{ item[1] }}</td>
+                <td>{{ item[2] }}</td>
+                <td>{{ item[3] }}</td>
+                <td>{{ item[4] }}</td>
+                <td><a href="{{ url_for('editar_item', id=item[0]) }}" class="btn-edit">Editar</a></td>
+                <td><a href="{{ url_for('deletar_item', id=item[0]) }}" class="btn-delete" onclick="return confirm('Tem certeza?');">Excluir</a></td>
+            </tr>
             {% endfor %}
         </table>
         <h2>Produtos Vencidos</h2>

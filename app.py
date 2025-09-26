@@ -1,8 +1,12 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify,make_response
 import datetime
 import csv
 import os
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import letter
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -114,6 +118,88 @@ def estoque():
     vencidos = [item for item in itens if datetime.datetime.strptime(item[4], '%Y-%m-%d') < datetime.datetime.now()]
     conn.close()
     return render_template('estoque.html', itens=itens, vencidos=vencidos)
+
+#Editar Itens do Estoque
+@app.route('/estoque/editar/<int:id>', methods=['GET', 'POST'])
+def editar_item(id):
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        produto = request.form['produto']
+        codigo_barras = request.form['codigo_barras']
+        quantidade = int(request.form['quantidade'])
+        validade = request.form['validade']
+
+        c.execute('''UPDATE estoque SET produto=?, codigo_barras=?, quantidade=?, validade=? WHERE id=?''',
+                  (produto, codigo_barras, quantidade, validade, id))
+        conn.commit()
+        conn.close()
+        log_auditoria(f"Item de estoque atualizado: {produto} (ID: {id})")
+        return redirect(url_for('estoque'))
+
+    # Se o método for GET, busca o item e mostra o formulário de edição
+    c.execute("SELECT * FROM estoque WHERE id = ?", (id,))
+    item = c.fetchone()
+    conn.close()
+    return render_template('editar_item.html', item=item)
+
+#Excluir Itens do Estoque
+@app.route('/estoque/delete/<int:id>')
+def deletar_item(id):
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM estoque WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    log_auditoria(f"Item de estoque excluído: ID {id}")
+    return redirect(url_for('estoque'))
+
+#Relatórios de Estoque em PDF
+@app.route('/relatorio/estoque/pdf')
+def relatorio_estoque_pdf():
+    # Conectar ao banco e buscar dados do estoque
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
+    c.execute("SELECT produto, codigo_barras, quantidade, validade FROM estoque ORDER BY produto")
+    itens = c.fetchall()
+    conn.close()
+
+    # Gerar PDF em memória
+    buffer = io.BytesIO()
+
+    # Cria o canvas do pdf especificando o tamanho da página
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # 3. "Desenhar" o conteúdo no PDF
+    # ReportLab usa um sistema de coordenadas onde (0,0) é o canto inferior esquerdo.
+    # A página 'letter' tem 612 pontos de largura e 792 de altura.
+    
+    # Título do relatório
+    p.setFont("Helvetica", 12)
+    p.drawString(1 * inch, height - 1 * inch, "Relatório de Estoque")
+    y = height - 1.5 * inch
+    p.setFont("Helvetica", 10)
+    for item in itens:
+        linha = f"ID: {item[0]}, Produto: {item[1]}, Código de Barras: {item[2]}, Quantidade: {item[3]}, Validade: {item[4]}"
+        p.drawString(1 * inch, y, linha)
+        y -= 0.25 * inch
+        if y < 1 * inch:
+            p.showPage()
+            p.setFont("Helvetica", 10)
+            y = height - 1 * inch
+    #Finaliza o PDF
+    p.save()
+    buffer.seek(0)# Volta para o inicio do buffer
+
+    #cria a resposta do Flask com o PDF
+    # Cria a resposta do Flask
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=relatorio_estoque.pdf'
+
+    return response
 
 @app.route('/saida', methods=['GET', 'POST'])
 def saida():
@@ -280,29 +366,75 @@ def backup_nuvem():
     except Exception as e:
         return f"Erro no backup: {str(e)} (Verifique conexão e credentials.json)"
 
-# Editar e Excluir Clientes
+# Editar Clientes
+@app.route('/cliente/editar/<int:id>', methods=['GET', 'POST'])
+def editar_cliente(id):
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
 
-@app.route('/cliente/update/<int:id>', methods=['POST'])
-def update_cliente(id):
-    # Esta rota SÓ lida com o envio do formulário de EDIÇÃO
     if request.method == 'POST':
-        conn = sqlite3.connect('gestao.db')
-        c = conn.cursor()
-        
+        # Pega TODOS os campos do formulário de EDIÇÃO
         regiao = request.form['regiao']
         cidade = request.form['cidade']
         num_loja = request.form['num_loja']
-        # ... pegue os outros campos do formulário ...
-        
-        c.execute('''UPDATE clientes SET regiao=?, cidade=?, num_loja=? 
-                     WHERE id=?''', (regiao, cidade, num_loja, id))
+        potencia_loja = request.form['potencia_loja']
+        num_cim = request.form['num_cim']
+        endereco = request.form['endereco']
+
+        c.execute('''UPDATE clientes SET regiao=?, cidade=?, num_loja=?, potencia_loja=?, num_cim=?, endereco=? 
+                     WHERE id=?''', 
+                  (regiao, cidade, num_loja, potencia_loja, num_cim, endereco, id))
         conn.commit()
         conn.close()
-        
-        log_auditoria(f"Cliente atualizado: Loja {num_loja} (ID: {id})")
-        
+        log_auditoria(f"Cliente atualizado: Loja {num_loja}")
         return redirect(url_for('clientes'))
 
+    # Se o método for GET, busca o cliente e mostra o formulário de edição
+    c.execute("SELECT * FROM clientes WHERE id = ?", (id,))
+    cliente = c.fetchone()
+    conn.close()
+    return render_template('editar_cliente.html', cliente=cliente)
+
+# Editar Fornecedores
+@app.route('/fornecedores/editar/<int:id>', methods=['GET', 'POST'])
+def editar_fornecedores(id):
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        regiao = request.form['fornecedor_regiao']
+        cidade = request.form['fornecedor_cidade']
+        num_loja = request.form['fornecedor_num_loja']
+        potencia_loja = request.form['fornecedor_potencia_loja']
+        num_cim = request.form['fornecedor_num_cim']
+        endereco = request.form['fornecedor_endereco']
+        c.execute('''UPDATE fornecedores SET fornecedor_regiao=?, fornecedor_cidade=?, fornecedor_num_loja=?, fornecedor_potencia_loja=?, fornecedor_num_cim=?, fornecedor_endereco=? WHERE fornecedor_id=?''',
+                  (regiao, cidade, num_loja, potencia_loja, num_cim, endereco, id))
+        conn.commit()
+        conn.close()
+        log_auditoria(f"Fornecedor atualizado: {num_loja} (ID: {id})")
+        return redirect(url_for('fornecedores'))
+
+    # Se o método for GET, busca o fornecedor e mostra o formulário de edição
+    c.execute("SELECT * FROM fornecedores WHERE fornecedor_id = ?", (id,))
+    fornecedor = c.fetchone()
+    conn.close()
+    return render_template('editar_fornecedores.html', fornecedor=fornecedor)
+
+#Excluir Fornecedores
+@app.route('/fornecedores/delete/<int:id>')
+def deletar_fornecedores(id):
+    conn = sqlite3.connect('gestao.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM fornecedores WHERE fornecedor_id = ?", (id,))
+    conn.commit()
+    conn.close()
+    log_auditoria(f"Fornecedores excluído: ID {id}")
+    return redirect(url_for('fornecedores'))
+    
+
+
+#Excluir Clientes
 @app.route('/cliente/delete/<int:id>')
 def delete_cliente(id):
     # Esta rota SÓ lida com a exclusão
