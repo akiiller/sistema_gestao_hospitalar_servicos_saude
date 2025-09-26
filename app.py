@@ -161,7 +161,7 @@ def relatorio_estoque_pdf():
     # Conectar ao banco e buscar dados do estoque
     conn = sqlite3.connect('gestao.db')
     c = conn.cursor()
-    c.execute("SELECT produto, codigo_barras, quantidade, validade FROM estoque ORDER BY produto")
+    c.execute("SELECT id, produto, codigo_barras, quantidade, validade FROM estoque ORDER BY produto")
     itens = c.fetchall()
     conn.close()
 
@@ -182,6 +182,8 @@ def relatorio_estoque_pdf():
     y = height - 1.5 * inch
     p.setFont("Helvetica", 10)
     for item in itens:
+        print(item)
+        print(len(item))
         linha = f"ID: {item[0]}, Produto: {item[1]}, Código de Barras: {item[2]}, Quantidade: {item[3]}, Validade: {item[4]}"
         p.drawString(1 * inch, y, linha)
         y -= 0.25 * inch
