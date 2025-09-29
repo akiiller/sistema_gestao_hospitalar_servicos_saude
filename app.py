@@ -111,13 +111,32 @@ def estoque():
         conn.close()
         log_auditoria(f"Entrada de produto: {produto} (ID: {produto_id})")
         return redirect(url_for('estoque'))
+    # --- LÓGICA DE BUSCA APRIMORADA ---
     conn = sqlite3.connect('gestao.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM estoque")
+    
+    # Busca todos os itens (para a tabela principal)
+    c.execute("SELECT * FROM estoque ORDER BY validade ASC")
     itens = c.fetchall()
-    vencidos = [item for item in itens if datetime.datetime.strptime(item[4], '%Y-%m-%d') < datetime.datetime.now()]
+
+    # Busca apenas itens que vencerão nos próximos 30 dias (e que ainda não venceram)
+    data_hoje = datetime.date.today()
+    data_limite = data_hoje + datetime.timedelta(days=30)
+    c.execute("SELECT * FROM estoque WHERE validade BETWEEN ? AND ? ORDER BY validade ASC", 
+              (data_hoje.strftime('%Y-%m-%d'), data_limite.strftime('%Y-%m-%d')))
+    vencimento_proximo = c.fetchall()
+
+    # Busca apenas itens já vencidos
+    c.execute("SELECT * FROM estoque WHERE validade < ? ORDER BY validade ASC", (data_hoje.strftime('%Y-%m-%d'),))
+    vencidos = c.fetchall()
+    
     conn.close()
-    return render_template('estoque.html', itens=itens, vencidos=vencidos)
+    
+    # Passa as três listas para o template
+    return render_template('estoque.html', 
+                           itens=itens, 
+                           vencidos=vencidos, 
+                           vencimento_proximo=vencimento_proximo)
 
 #Editar Itens do Estoque
 @app.route('/estoque/editar/<int:id>', methods=['GET', 'POST'])

@@ -51,12 +51,33 @@
             </tr>
             {% endfor %}
         </table>
-        <h2>Produtos Vencidos</h2>
+        <!-- <h2>Produtos Vencidos</h2>
         <ul>
             {% for item in vencidos %}
             <li>{{ item[1] }} - Vencido em {{ item[4] }}</li>
             {% endfor %}
-        </ul>
+        </ul> -->
+        {% if vencidos %}
+        <div class="alert alert-danger">
+            <h3>Atenção: Produtos Vencidos!</h3>
+            <ul>
+                {% for item in vencidos %}
+                    <li>{{ item[1] }} (Código: {{ item[2] }}) - Venceu em: {{ item[4] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if vencimento_proximo %}
+        <div class="alert alert-warning">
+            <h3>Alerta: Produtos com Validade Próxima (Próximos 30 dias)</h3>
+            <ul>
+                {% for item in vencimento_proximo %}
+                    <li>{{ item[1] }} (Código: {{ item[2] }}) - Vence em: {{ item[4] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
     </main>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
