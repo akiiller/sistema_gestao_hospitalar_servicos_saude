@@ -1,4 +1,4 @@
-# sistema_gestao_augusto_abou
+# sistema_gestao_hospitalar_serviços_saude
 Instale o ambiente no Windows:
 
 Instale Python para Windows (baixe do site oficial python.org).

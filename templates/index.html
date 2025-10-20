@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA DE GESTÃO AUGUSTO ABOU</title>
+    <title>SISTEMA DE GESTÃO HOSPITALAR DE SERVIÇOS DE SAÚDE</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -13,39 +13,39 @@
         <section class="menu-section" aria-label="Seção de Cadastros">
             <h2>Cadastros</h2>
             <div class="card-grid">
-                <a href="/clientes" class="card" aria-label="Cadastro de Clientes">
-                    <span class="icon">👤</span> Cadastro de Clientes
+                <a href="/pacientes" class="card" aria-label="Cadastro de pacientes">
+                    <span class="icon">👤</span> Cadastro de pacientes
                 </a>
-                <a href="/estoque" class="card" aria-label="Cadastro de Produtos">
-                    <span class="icon">📦</span> Cadastro de Produtos
+                <a href="/consulta" class="card" aria-label="Cadastro de consultas">
+                    <span class="icon">📦</span> Cadastro de consultas
                 </a>
-                <a href="/fornecedores" class="card" aria-label="Cadastro de Fornecedores">
-                    <span class="icon">🏭</span> Cadastro de Fornecedores
+                <a href="/medicos" class="card" aria-label="Cadastro de medicos">
+                    <span class="icon">🏭</span> Cadastro de medicos
                 </a>
             </div>
         </section>
         <section class="menu-section" aria-label="Seção de Lançamentos">
             <h2>Lançamentos</h2>
             <div class="card-grid">
-                <a href="/estoque" class="card" aria-label="Entradas no Estoque">
-                    <span class="icon">➕</span> Entradas no Estoque
+                <a href="/consulta" class="card" aria-label="Entradas no consultas">
+                    <span class="icon">➕</span> Entradas no consultas
                 </a>
-                <a href="/saida" class="card" aria-label="Saídas do Estoque">
-                    <span class="icon">➖</span> Saídas do Estoque
+                <a href="/saida" class="card" aria-label="Saídas do consultas">
+                    <span class="icon">➖</span> Saídas do consultas
                 </a>
-                <a href="/estoque" class="card" aria-label="Inventário do Estoque" disabled>
-                    <span class="icon">📋</span> Inventário do Estoque
+                <a href="/consulta" class="card" aria-label="Protuário Médico" disabled>
+                    <span class="icon">📋</span> Inventário do consultas
                 </a>
             </div>
         </section>
         <section class="menu-section" aria-label="Seção de Relatórios">
             <h2>Relatórios</h2>
             <div class="card-grid">
-                <a href="/auditoria" class="card" aria-label="Relatório de Produtos">
-                    <span class="icon">📊</span> Relatório de Produtos
+                <a href="/auditoria" class="card" aria-label="Relatório de consultas">
+                    <span class="icon">📊</span> Relatório de consultas
                 </a>
-                <a href="/auditoria" class="card" aria-label="Relatório de Clientes" disabled>
-                    <span class="icon">👥</span> Relatório de Clientes
+                <a href="/auditoria" class="card" aria-label="Relatório de pacientes" disabled>
+                    <span class="icon">👥</span> Relatório de pacientes
                 </a>
                 <a href="/auditoria" class="card" aria-label="Relatório de Entradas" disabled>
                     <span class="icon">📥</span> Relatório de Entradas

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Agenda</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Controle de Agenda</h1>
+        <a href="/" class="back-btn">Voltar</a>
+    </header>
+    <main>
+        <h2>Adicionar consulta (Entrada)</h2>
+        <form method="POST" aria-label="Formulário de adição de consulta">
+    
+    <label for="consulta">Consulta:</label>
+    <input type="text" id="consulta" name="consulta" required aria-required="true"><br>
+
+   <label for="paciente_id">Paciente:</label>
+    <select id="paciente_id" name="paciente_id" required aria-required="true">
+        <option value="" disabled selected>Selecione um paciente...</option>
+        
+        {% for paciente in pacientes %}
+            <option value="{{ paciente[0] }}">{{ paciente[1] }}</option>
+        {% endfor %}
+        
+    </select><br>
+
+    <label for="medico_id">Médico:</label>
+    <select id="medico_id" name="medico_id" required aria-required="true">
+        <option value="" disabled selected>Selecione um médico...</option>
+        
+        {% for medico in medicos %}
+            <option value="{{ medico[0] }}">{{ medico[1] }}</option>
+        {% endfor %}
+        
+    </select><br>
+
+    <label for="horario">Horário:</label>
+    <input type="time" id="horario" name="horario" required aria-required="true"><br>
+    
+    <label for="data">Data:</label>
+    <input type="date" id="data" name="data" required aria-required="true"><br>
+    
+    <button type="submit">Adicionar</button>
+</form>
+        <h2>Agenda de Consultas</h2>
+        <div style="margin-bottom: 15px;">
+            <a href="{{ url_for('relatorio_consulta_pdf') }}" target="_blank" class="btn-export">
+                Exportar para PDF
+            </a>
+        </div>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>consulta</th>
+                <th>Código de Barras</th>
+                <th>Quantidade</th>
+                <th>Validade</th>
+                <th>Editar</th>
+                <th>Excluir</th>
+            </tr>
+            {% for item in consultas %}
+            <tr>
+                <td>{{ item[0] }}</td>
+                <td>{{ item[1] }}</td>
+                <td>{{ item[2] }}</td>
+                <td>{{ item[3] }}</td>
+                <td>{{ item[4] }}</td>
+                <td><a href="{{ url_for('editar_item', id=item[0]) }}" class="btn-edit">Editar</a></td>
+                <td><a href="{{ url_for('deletar_item', id=item[0]) }}" class="btn-delete" onclick="return confirm('Tem certeza?');">Excluir</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+       
+        {% if hoje %}
+        <div class="alert alert-danger">
+            <h3>Atenção: Consultas de hoje!</h3>
+            <ul>
+                {% for item in hoje %}
+                    <li>Dr.{{ item[1] }} -Paciente: {{ item[2] }} (Data: {{ item[3] }}) - Horário em: {{ item[4] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if data_proximo %}
+        <div class="alert alert-warning">
+            <h3>Alerta: Consultas com Data Próxima (Próximos 1 dias: confirmar)</h3>
+            <ul>
+                {% for item in data_proximo %}
+                    <li>Dr. {{ item[1] }} (Paciente: {{ item[2] }}) - Consulta em: {{ item[4] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </main>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
