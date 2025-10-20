@@ -25,14 +25,13 @@ def init_db():
                  codigo_barras TEXT,
                  quantidade INTEGER,
                  validade DATE)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS clientes (
+    c.execute('''CREATE TABLE IF NOT EXISTS pacientes (
                  id INTEGER PRIMARY KEY,
-                 regiao TEXT,
-                 cidade TEXT,
-                 num_loja TEXT,
-                 potencia_loja TEXT,
-                 num_cim TEXT,
-                 endereco TEXT)''')
+                 nome TEXT,
+                 idade INTEGER,
+                 sexo TEXT,
+                 endereco TEXT,
+                 num_cim TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS auditoria (
                  id INTEGER PRIMARY KEY,
                  acao TEXT,
@@ -46,7 +45,7 @@ def init_db():
                  id INTEGER PRIMARY KEY,
                  produto_id INTEGER,
                  quantidade INTEGER,
-                 cliente_id INTEGER,
+                 paciente_id INTEGER,
                  data TIMESTAMP)''')
     c.execute('''CREATE TABLE IF NOT EXISTS fornecedores (
                  fornecedor_id INTEGER PRIMARY KEY,
@@ -227,14 +226,14 @@ def saida():
     if request.method == 'POST':
         codigo_barras = request.form['codigo_barras']
         quantidade = int(request.form['quantidade'])
-        cliente_id = int(request.form['cliente_id'])
+        paciente_id = int(request.form['paciente_id'])
         conn = sqlite3.connect('gestao.db')
         c = conn.cursor()
-        # Verifica cliente existe
-        c.execute("SELECT id FROM clientes WHERE id = ?", (cliente_id,))
+        # Verifica paciente existe
+        c.execute("SELECT id FROM pacientes WHERE id = ?", (paciente_id,))
         if not c.fetchone():
             conn.close()
-            return "Cliente não encontrado!", 400
+            return "paciente não encontrado!", 400
         # Busca produto por codigo_barras
         c.execute("SELECT id, quantidade FROM estoque WHERE codigo_barras = ?", (codigo_barras,))
         produto = c.fetchone()
@@ -245,39 +244,38 @@ def saida():
         # Atualiza estoque
         c.execute("UPDATE estoque SET quantidade = quantidade - ? WHERE id = ?", (quantidade, produto_id))
         # Registra saida
-        c.execute("INSERT INTO saidas (produto_id, quantidade, cliente_id, data) VALUES (?, ?, ?, ?)", 
-                  (produto_id, quantidade, cliente_id, datetime.datetime.now()))
+        c.execute("INSERT INTO saidas (produto_id, quantidade, paciente_id, data) VALUES (?, ?, ?, ?)", 
+                  (produto_id, quantidade, paciente_id, datetime.datetime.now()))
         conn.commit()
         conn.close()
-        log_auditoria(f"Saída de produto ID {produto_id} para cliente {cliente_id}")
+        log_auditoria(f"Saída de produto ID {produto_id} para paciente {paciente_id}")
         return redirect(url_for('saida'))
     return render_template('saida.html')
 
-@app.route('/clientes', methods=['GET', 'POST'])
-def clientes():
+@app.route('/pacientes', methods=['GET', 'POST'])
+def pacientes():
     if request.method == 'POST':
-        regiao = request.form['regiao']
-        cidade = request.form['cidade']
-        num_loja = request.form['num_loja']
-        potencia_loja = request.form['potencia_loja']
-        num_cim = request.form['num_cim']
+        nome = request.form['nome']
+        idade = request.form['idade']
+        sexo = request.form['sexo']
         endereco = request.form['endereco']
-        if not all([regiao, cidade, num_loja, potencia_loja, num_cim, endereco]):
+        num_cim = request.form['num_cim']
+        if not all([nome, idade, sexo, endereco, num_cim]):
             return "Campos obrigatórios faltando!", 400
         conn = sqlite3.connect('gestao.db')
         c = conn.cursor()
-        c.execute("INSERT INTO clientes (regiao, cidade, num_loja, potencia_loja, num_cim, endereco) VALUES (?, ?, ?, ?, ?, ?)",
-                  (regiao, cidade, num_loja, potencia_loja, num_cim, endereco))
+        c.execute("INSERT INTO pacientes (nome, idade, sexo, endereco, num_cim) VALUES (?, ?, ?, ?, ?)",
+                  (nome, idade, sexo, endereco, num_cim))
         conn.commit()
         conn.close()
-        log_auditoria(f"Cadastrado cliente: {num_loja}")
-        return redirect(url_for('clientes'))
+        log_auditoria(f"Cadastrado paciente: {nome}")
+        return redirect(url_for('pacientes'))
     conn = sqlite3.connect('gestao.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM clientes")
-    clientes_list = c.fetchall()
+    c.execute("SELECT * FROM pacientes")
+    pacientes_list = c.fetchall()
     conn.close()
-    return render_template('clientes.html', clientes=clientes_list)
+    return render_template('pacientes.html', pacientes=pacientes_list)
 
 @app.route('/fornecedores', methods=['GET', 'POST'])
 def fornecedores():
@@ -358,21 +356,21 @@ def relatorio_saidas():
         return render_template('relatorio.html', titulo='Relatório de Saídas', dados=dados, colunas=['ID', 'Produto', 'Quantidade', 'Data'])
     return render_template('form_periodo.html', tipo='saidas')
 
-@app.route('/relatorio_saidas_clientes', methods=['GET', 'POST'])
-def relatorio_saidas_clientes():
+@app.route('/relatorio_saidas_pacientes', methods=['GET', 'POST'])
+def relatorio_saidas_pacientes():
     if request.method == 'POST':
         data_inicio = request.form['data_inicio']
         data_fim = request.form['data_fim']
         conn = sqlite3.connect('gestao.db')
         c = conn.cursor()
-        c.execute('''SELECT s.id, est.produto, s.quantidade, c.num_loja AS cliente, s.data 
+        c.execute('''SELECT s.id, est.produto, s.quantidade, c.num_loja AS paciente, s.data 
                      FROM saidas s JOIN estoque est ON s.produto_id = est.id 
-                     JOIN clientes c ON s.cliente_id = c.id 
+                     JOIN pacientes c ON s.paciente_id = c.id 
                      WHERE s.data BETWEEN ? AND ?''', (data_inicio, data_fim))
         dados = c.fetchall()
         conn.close()
-        return render_template('relatorio.html', titulo='Relatório de Saídas por Clientes', dados=dados, colunas=['ID', 'Produto', 'Quantidade', 'Cliente', 'Data'])
-    return render_template('form_periodo.html', tipo='saidas_clientes')
+        return render_template('relatorio.html', titulo='Relatório de Saídas por pacientes', dados=dados, colunas=['ID', 'Produto', 'Quantidade', 'paciente', 'Data'])
+    return render_template('form_periodo.html', tipo='saidas_pacientes')
 
 @app.route('/backup_nuvem')
 def backup_nuvem():
@@ -387,9 +385,9 @@ def backup_nuvem():
     except Exception as e:
         return f"Erro no backup: {str(e)} (Verifique conexão e credentials.json)"
 
-# Editar Clientes
-@app.route('/cliente/editar/<int:id>', methods=['GET', 'POST'])
-def editar_cliente(id):
+# Editar pacientes
+@app.route('/paciente/editar/<int:id>', methods=['GET', 'POST'])
+def editar_paciente(id):
     conn = sqlite3.connect('gestao.db')
     c = conn.cursor()
 
@@ -402,19 +400,19 @@ def editar_cliente(id):
         num_cim = request.form['num_cim']
         endereco = request.form['endereco']
 
-        c.execute('''UPDATE clientes SET regiao=?, cidade=?, num_loja=?, potencia_loja=?, num_cim=?, endereco=? 
+        c.execute('''UPDATE pacientes SET regiao=?, cidade=?, num_loja=?, potencia_loja=?, num_cim=?, endereco=? 
                      WHERE id=?''', 
                   (regiao, cidade, num_loja, potencia_loja, num_cim, endereco, id))
         conn.commit()
         conn.close()
-        log_auditoria(f"Cliente atualizado: Loja {num_loja}")
-        return redirect(url_for('clientes'))
+        log_auditoria(f"paciente atualizado: Loja {num_loja}")
+        return redirect(url_for('pacientes'))
 
-    # Se o método for GET, busca o cliente e mostra o formulário de edição
-    c.execute("SELECT * FROM clientes WHERE id = ?", (id,))
-    cliente = c.fetchone()
+    # Se o método for GET, busca o paciente e mostra o formulário de edição
+    c.execute("SELECT * FROM pacientes WHERE id = ?", (id,))
+    paciente = c.fetchone()
     conn.close()
-    return render_template('editar_cliente.html', cliente=cliente)
+    return render_template('editar_paciente.html', paciente=paciente)
 
 # Editar Fornecedores
 @app.route('/fornecedores/editar/<int:id>', methods=['GET', 'POST'])
@@ -455,19 +453,19 @@ def deletar_fornecedores(id):
     
 
 
-#Excluir Clientes
-@app.route('/cliente/delete/<int:id>')
-def delete_cliente(id):
+#Excluir pacientes
+@app.route('/paciente/delete/<int:id>')
+def delete_paciente(id):
     # Esta rota SÓ lida com a exclusão
     conn = sqlite3.connect('gestao.db')
     c = conn.cursor()
-    c.execute("DELETE FROM clientes WHERE id = ?", (id,))
+    c.execute("DELETE FROM pacientes WHERE id = ?", (id,))
     conn.commit()
     conn.close()
     
-    log_auditoria(f"Cliente excluído: ID {id}")
+    log_auditoria(f"paciente excluído: ID {id}")
     
-    return redirect(url_for('clientes'))
+    return redirect(url_for('pacientes'))
 
 
 if __name__ == '__main__':
